@@ -81,7 +81,7 @@ lfm <- function(formula, data, effect = "individual", model = "onestep") {
 
   # Invert the weighting matrix (taking the general inverse if necessary):
   minevW1 <- min(eigen(W1)$values)
-  if (minevW1 < .Machine$double.eps) {
+  if (minevW1 < 0.000000001) {
     W1.inv <- ginv(W1)
     warning("The first-step matrix is singular, a general inverse is used")
   } else {
@@ -119,7 +119,7 @@ lfm <- function(formula, data, effect = "individual", model = "onestep") {
                              Z     = do.call(rbind, Z))
     # Invert the second-step weight matrix:
     minevW2 <- min(eigen(W2)$values)
-    if (minevW2 < .Machine$double.eps) {
+    if (minevW2 < 0.000000001) {
       W2.inv <- ginv(W2)
       warning("The second-step matrix is singular, a general inverse is used")
     } else {
