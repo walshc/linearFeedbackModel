@@ -10,9 +10,7 @@ This R package is work in progress.
 Usage is very similar to the `pgmm()` function in package `plm`:
 
 ```r
-lfm(formula, data, 
-    effect = c("twoways", "individual"),
-    model = c("onestep", "twosteps"))
+lfm(formula, data, effect = c("twoways", "individual"), model = c("onestep", "twosteps"))
 ```
 
 ### References
