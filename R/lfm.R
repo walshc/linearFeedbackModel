@@ -88,7 +88,6 @@ lfm <- function(formula, data, effect = "individual", model = "onestep") {
     W1.inv <- solve(W1)
   }
 
-  sourceCpp("src/obj.cpp")
   GMMfirstStep <- function(theta) {
     GMM(theta = as.double(theta),
         idx   = as.matrix(mdf[, 1:2]),
@@ -101,7 +100,6 @@ lfm <- function(formula, data, effect = "individual", model = "onestep") {
   # Obtain a first step estimate of theta from the initial weight matrix:
   first <- optim(start, GMMfirstStep)
 
-  sourceCpp("src/get-q-and-mu.cpp")
   quasiDifference <- function(theta) {
     out <- qMu(theta = as.double(theta),
                idx   = as.matrix(mdf[, 1:2]),
@@ -114,7 +112,6 @@ lfm <- function(formula, data, effect = "individual", model = "onestep") {
   if (model == "twosteps") {
     # Find the efficient weight matrix (sum(Z'_i*q_i*q'_i,Z_i)) using
     # the estimates from the first step:
-    sourceCpp("src/second-weight-matrix.cpp")
     W2 <- secondWeightMatrix(theta = as.double(first$par),
                              idx   = as.matrix(mdf[, 1:2]),
                              nT    = as.integer(max(mdf$t)),
