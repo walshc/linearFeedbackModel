@@ -1,6 +1,6 @@
 # linearFeedbackModel
 
-This R package is work in progress.
+This R package is work in progress and might not work as expected.
 
 ### Description
 
@@ -16,8 +16,9 @@ devtools::install_github("walshc/linearFeedbackModel")
 Usage is very similar to the `pgmm()` function in package `plm`:
 
 ```r
-lfm(formula, data, effect = c("twoways", "individual"), model = c("onestep", "twosteps"))
+lfm(formula, data, effect = "individual", model = "onestep")
 ```
+Type `help(lfm)` for more details.
 
 ### References
  - Blundell, Richard & Griffith, Rachel & Windmeijer, Frank, 2002. "Individual effects and dynamics in count data models," *Journal of Econometrics*, Elsevier, vol. 108(1), pages 113-131, May.
