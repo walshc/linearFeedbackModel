@@ -75,9 +75,9 @@ lfm <- function(formula, data, effect = "individual", model = "onestep") {
   K <- ncol(mdf) - 4
 
   # Get the weighting matrix (use sum(Z'_i*Z_i) in the first step):
-  # W1 <- firstWeightMatrix(Z = do.call(rbind, Z))
+  W1 <- firstWeightMatrix(Z = do.call(rbind, Z))
   # Use identity matrix instead:
-  W1 <- diag(1, nrow = ncol(Z[[1]]), ncol = ncol(Z[[1]]))
+  # W1 <- diag(1, nrow = ncol(Z[[1]]), ncol = ncol(Z[[1]]))
 
   # Invert the weighting matrix (taking the general inverse if necessary):
   minevW1 <- min(eigen(W1)$values)
