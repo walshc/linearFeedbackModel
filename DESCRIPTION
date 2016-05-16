@@ -1,0 +1,11 @@
+Package: linearFeedbackModel
+Type: Package
+Title: Estimate the linear feedback model from Blundell, Griffith and Windmeijer (2002)
+Version: 0.0.1
+Date: 2016-05-10
+Author: Christoph Walsh
+Maintainer: Christoph Walsh <walshcb@bu.edu>
+Description: Estimate the linear feedback model in Blundell, Griffith and Windmeijer "Individual effects and dynamics in count data models", Journal of Econometrics 108 (2002) 113-131.
+License: GPL (>= 2)
+Imports: Rcpp (>= 0.12.4)
+LinkingTo: Rcpp
