@@ -2,10 +2,6 @@ library(linearFeedbackModel)
 library(plm)
 set.seed(123)
 
-detach("package:linearFeedbackModel", unload = TRUE)
-install.packages("../linearFeedbackModel", repos = NULL, type = "source")
-library(linearFeedbackModel)
-
 # Create some data - follow example in Blundell, Griffith and Windmeijer (2002):
 
 nT          <- 8     # Number of time periods
