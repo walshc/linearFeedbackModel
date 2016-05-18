@@ -7,5 +7,5 @@ Author: Christoph Walsh
 Maintainer: Christoph Walsh <walshcb@bu.edu>
 Description: Estimate the linear feedback model in Blundell, Griffith and Windmeijer "Individual effects and dynamics in count data models", Journal of Econometrics 108 (2002) 113-131.
 License: GPL (>= 2)
-Imports: Rcpp (>= 0.12.4)
+Imports: MASS, plm, Rcpp (>= 0.12.4)
 LinkingTo: Rcpp

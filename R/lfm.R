@@ -1,10 +1,11 @@
 lfm <- function(formula, data, effect = "individual", model = "onestep") {
-  if(!require(plm)) stop("Package 'plm' required.")
-  if(!require(MASS)) stop("Package 'MASS' required.")
-  if(!require(Rcpp)) stop("Package 'Rcpp' required.")
-  require(plm)
-  require(MASS)
-  require(Rcpp)
+
+  # Make sure dependencies are installed:
+  sapply(c("MASS", "plm", "Rcpp"), function(x) {
+    if(!suppressPackageStartupMessages(require(x, character.only = TRUE))) {
+      stop(paste0("Package '", x, "' required"))
+    }
+  })
 
   # Store the function call:
   cl <- match.call()
@@ -44,14 +45,14 @@ lfm <- function(formula, data, effect = "individual", model = "onestep") {
   # Create the instrument matrix (W). The pgmm function does this (same
   # instruments as Arellano Bond). Use those coefficients as starting values
   # too.
-  arellano.bond <- pgmm(formula, effect = effect, model = model, data = data)
-  Z <- arellano.bond$W
+  ab <- plm::pgmm(formula, effect = effect, model = model, data = data)
+  Z <- ab$W
   if (model == "onestep") {
-    start <- arellano.bond$coefficients  # Use the AB as starting values
+    start <- ab$coefficients  # Use the AB as starting values
   } else {
-    start <- arellano.bond$coefficients[[1]]
+    start <- ab$coefficients[[1]]
   }
-  rm(arellano.bond)
+  rm(ab)
 
   # Create a data set from the given formula (excluding the instruments):
   mdf <- model.frame(pFormula(formula), data = data, rhs = 1)
@@ -75,17 +76,14 @@ lfm <- function(formula, data, effect = "individual", model = "onestep") {
   K <- ncol(mdf) - 4
 
   # Get the weighting matrix (use sum(Z'_i*Z_i) in the first step):
-  W1 <- firstWeightMatrix(Z = do.call(rbind, Z))
+  # W1 <- firstWeightMatrix(Z = do.call(rbind, Z))
   # Use identity matrix instead:
-  # W1 <- diag(1, nrow = ncol(Z[[1]]), ncol = ncol(Z[[1]]))
+  W1 <- diag(1, nrow = ncol(Z[[1]]), ncol = ncol(Z[[1]]))
 
   # Invert the weighting matrix (taking the general inverse if necessary):
-  minevW1 <- min(eigen(W1)$values)
-  if (minevW1 < 0.000000001) {
-    W1.inv <- ginv(W1)
+  W1.inv <- ginv(W1)
+  if (min(eigen(W1)$values) < .Machine$double.eps) {
     warning("The first-step matrix is singular, a general inverse is used")
-  } else {
-    W1.inv <- solve(W1)
   }
 
   GMMfirstStep <- function(theta) {
@@ -118,12 +116,9 @@ lfm <- function(formula, data, effect = "individual", model = "onestep") {
                              data  = as.matrix(mdf[, 3:ncol(mdf)]),
                              Z     = do.call(rbind, Z))
     # Invert the second-step weight matrix:
-    minevW2 <- min(eigen(W2)$values)
-    if (minevW2 < 0.000000001) {
-      W2.inv <- ginv(W2)
+    W2.inv <- ginv(W2)
+    if (min(eigen(W2)$values) < .Machine$double.eps) {
       warning("The second-step matrix is singular, a general inverse is used")
-    } else {
-      W2.inv <- solve(W2)
     }
 
     GMMsecondStep <- function(theta) {
@@ -204,7 +199,7 @@ lfm <- function(formula, data, effect = "individual", model = "onestep") {
   }
 
   result$D <- D
-  result$vcov <- (1/N) * solve(D %*% solve(W) %*% t(D))
+  result$vcov <- (1 / N) * ginv(D %*% ginv(W) %*% t(D))
   class(result) <- "lfm"
   return(result)
 }
