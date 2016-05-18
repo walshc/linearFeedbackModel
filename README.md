@@ -4,7 +4,7 @@ This R package is work in progress and might not work as expected.
 
 ### Description
 
-`lfm.R` estimates the first-order linear feedback model in Blundell, Griffith and Windmeijer (2002) via Generalized Method of Moments.
+`lfm()` estimates the first-order linear feedback model in Blundell, Griffith and Windmeijer (2002) via Generalized Method of Moments.
 
 ### Installation
 ```r
@@ -16,7 +16,8 @@ devtools::install_github("walshc/linearFeedbackModel")
 Usage is very similar to the `pgmm()` function in package `plm`:
 
 ```r
-lfm(formula, data, effect = "individual", model = "onestep")
+lfm(y ~ lag(y, k = 1) + x | lag(y, k = 2:4) + lag(x, k = 1:4),
+    data = data, effect = "individual", model = "onestep")
 ```
 Type `help(lfm)` for more details.
 
