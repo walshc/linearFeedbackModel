@@ -5,7 +5,7 @@ set.seed(123)
 # Create some data - follow example in Blundell, Griffith and Windmeijer (2002):
 
 nT          <- 8     # Number of time periods
-N           <- 500   # Number of individuals
+N           <- 1000  # Number of individuals
 gamma       <- 0.5   # Coefficient on lagged dependent variable
 beta        <- 0.5   # Coefficient on x
 rho         <- 0.5   # For the starting values of x

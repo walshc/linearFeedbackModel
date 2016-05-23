@@ -1,9 +1,13 @@
 \name{lfm}
 \alias{lfm}
-\title{Estimate the linear feedback model in Blundell, Griffith and Windmeijer (2002)}
-\description{Estimate the linear feedback model in Blundell, Griffith and Windmeijer "Individual effects and dynamics in count data models", Journal of Econometrics 108 (2002) 113-131}
+\title{Estimate the linear feedback model in Blundell, Griffith and Windmeijer
+  (2002)}
+\description{Estimate the linear feedback model in Blundell, Griffith and
+  Windmeijer "Individual effects and dynamics in count data models", Journal of
+  Econometrics 108 (2002) 113-131}
 \usage{
-lfm(formula, data, effect = "individual", model = "onestep")
+lfm(formula, data, effect = "individual", model = "onestep",
+    weight.matrix = "identity")
 }
 \arguments{
 \item{formula}{Similar to the \code{pgmm()} function in package \code{plm}.  A
@@ -12,8 +16,14 @@ lfm(formula, data, effect = "individual", model = "onestep")
   instruments and, if any, the third part the 'normal' instruments. The first
   independent variable must be the lag of the dependent variable.}
 \item{data}{A \code{pdata.frame}.}
-\item{effect}{Either \code{"individual"} or \code{"twoways"}. The former only includes individual fixed effects while the latter also includes time fixed effects.}
-\item{effect}{Either \code{"onestep"} or \code{"twosteps"}. Whether to do one-step GMM or two-step GMM.}
+\item{effect}{Either \code{"individual"} or \code{"twoways"}. The former only
+  includes individual fixed effects while the latter also includes time fixed
+  effects.}
+\item{effect}{Either \code{"onestep"} or \code{"twosteps"}. Whether to do
+  one-step GMM or two-step GMM.}
+\item{weight.matrix}{Either \code{"identity"} or \code{"instruments"}. Whether
+  to use the identity matrix of the cross product of the instruments for the
+  first-step weight matrix.}
 }
 \value{
   \item{call}{The matched call}
@@ -39,7 +49,7 @@ set.seed(123)
 # Create some data - follow example in Blundell, Griffith and Windmeijer (2002):
 
 nT          <- 8     # Number of time periods
-N           <- 500   # Number of individuals
+N           <- 1000  # Number of individuals
 gamma       <- 0.5   # Coefficient on lagged dependent variable
 beta        <- 0.5   # Coefficient on x
 rho         <- 0.5   # For the starting values of x
@@ -87,4 +97,3 @@ test <- lfm(y ~ lag(y, k = 1) + x | lag(y, k = 2:4) + lag(x, k = 1:4),
             data = data, effect = "individual", model = "onestep")
 print(summary(test))
 }
-

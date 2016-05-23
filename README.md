@@ -4,7 +4,7 @@ This R package is work in progress and might not work as expected.
 
 ### Description
 
-`lfm()` estimates the first-order linear feedback model in Blundell, Griffith and Windmeijer (2002) via Generalized Method of Moments.
+`lfm()` estimates the first-order linear feedback model in [Blundell, Griffith and Windmeijer (2002)](http://personalpages.manchester.ac.uk/staff/rachel.griffith/PublishedPapers/BlundellGriffithWindmeijer02.pdf) via Generalized Method of Moments.
 
 ### Installation
 ```r
@@ -22,6 +22,6 @@ lfm(y ~ lag(y, k = 1) + x | lag(y, k = 2:4) + lag(x, k = 1:4),
 Type `help(lfm)` for more details.
 
 ### References
- - Blundell, Richard & Griffith, Rachel & Windmeijer, Frank, 2002. "Individual effects and dynamics in count data models," *Journal of Econometrics*, Elsevier, vol. 108(1), pages 113-131, May.
+ - Blundell, Richard & Griffith, Rachel & Windmeijer, Frank, 2002. ["Individual effects and dynamics in count data models"](http://personalpages.manchester.ac.uk/staff/rachel.griffith/PublishedPapers/BlundellGriffithWindmeijer02.pdf), *Journal of Econometrics*, Elsevier, vol. 108(1), pages 113-131, May.
 
 
