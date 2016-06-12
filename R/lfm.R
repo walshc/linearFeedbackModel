@@ -226,10 +226,11 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
   # Obtain a first step estimate of theta from the initial weight matrix:
   if (ncol(mdf) == 4) {
     first <- stats::optimize(f = GMMfirstStep, interval = c(-1e3, 1e3))
+    names(first$par) <- names(mdf)[4]
   } else {
     first <- stats::optim(rep(0, ncol(mdf) - 3), GMMfirstStep)
+    names(first$par) <- names(mdf)[4:ncol(mdf)]
   }
-  names(first$par) <- names(mdf)[4:ncol(mdf)]
 
   quasiDifference <- function(theta) {
     out <- qMu(theta = as.double(theta),
