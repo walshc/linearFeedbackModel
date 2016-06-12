@@ -13,3 +13,10 @@ summary.lfm <- function(x) {
   cat("\nCoefficients:\n")
   print(lmtest::coeftest(x, vcov = x$vcov))
 }
+
+print.summary.lfm <- function(x) {
+  cat("Call:\n")
+  print(x$call)
+  cat("\nCoefficients:\n")
+  print(lmtest::coeftest(x, vcov = x$vcov))
+}

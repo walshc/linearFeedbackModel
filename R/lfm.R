@@ -1,13 +1,6 @@
 lfm <- function(formula, data, effect = "individual", model = "onestep",
                 weight.matrix = "identity") {
 
-  # Make sure dependencies are installed:
-  sapply(c("MASS", "plm", "Rcpp"), function(x) {
-    if(!suppressPackageStartupMessages(require(x, character.only = TRUE))) {
-      stop(paste0("Package '", x, "' required"))
-    }
-  })
-
   # Store the function call:
   cl <- match.call()
 
@@ -187,10 +180,12 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
 
   # Model data frame:
   row.names(yX) <- NULL
-  mdf <- pdata.frame(cbind(index(data), yX), index = c("i", "t"))
-  # Convert from factor to integer:
-  mdf$i <- as.integer(as.character(mdf$i))
-  mdf$t <- as.integer(as.character(mdf$t))
+  mdf <- pdata.frame(cbind(index(data), yX), index = names(index(data)))
+  names(mdf)[1:2] <- c("i", "t")
+
+  # Convert indices from factor to integer:
+  mdf$i <- as.integer(mdf$i)
+  mdf$t <- as.integer(mdf$t)
 
   # Drop missings (from taking lags):
   mdf <- na.omit(mdf)
@@ -229,7 +224,11 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
   }
 
   # Obtain a first step estimate of theta from the initial weight matrix:
-  first <- stats::optim(rep(0, ncol(mdf) - 3), GMMfirstStep)
+  if (ncol(mdf) == 4) {
+    first <- stats::optimize(f = GMMfirstStep, interval = c(-1e3, 1e3))
+  } else {
+    first <- stats::optim(rep(0, ncol(mdf) - 3), GMMfirstStep)
+  }
   names(first$par) <- names(mdf)[4:ncol(mdf)]
 
   quasiDifference <- function(theta) {
@@ -264,7 +263,11 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
           W_inv = as.matrix(W2.inv))
     }
 
-    second <- stats::optim(rep(0, ncol(mdf) - 3), GMMsecondStep)
+    if (ncol(mdf) == 4) {
+      second <- stats::optimize(f = GMMsecondStep, interval = c(-1e3, 1e3))
+    } else {
+      second <- stats::optim(rep(0, ncol(mdf) - 3), GMMsecondStep)
+    }
     names(second$par) <- names(mdf)[4:ncol(mdf)]
     result <- list(call = cl, coefficients = second$par, model = mdf,
                    first = first$par, W1 = W1, W2 = W2, Z = Z)

@@ -1,6 +1,6 @@
 # linearFeedbackModel
 
-This R package is work in progress and might not work as expected.
+This R package is very much work in progress and might not work as expected. Some portions of the code come from the `pgmm()` function in package `plm`.
 
 ### Description
 
