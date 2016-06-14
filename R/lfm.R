@@ -224,13 +224,13 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
   }
 
   # Obtain a first step estimate of theta from the initial weight matrix:
-  if (ncol(mdf) == 4) {
+  if (K == 0) {
     first <- stats::optimize(f = GMMfirstStep, interval = c(-1e3, 1e3))
-    names(first$par) <- names(mdf)[4]
+    first$par <- first$minimum
   } else {
-    first <- stats::optim(rep(0, ncol(mdf) - 3), GMMfirstStep)
-    names(first$par) <- names(mdf)[4:ncol(mdf)]
+    first <- stats::optim(rep(0, K + 1), GMMfirstStep)
   }
+  names(first$par) <- names(mdf)[4:ncol(mdf)]
 
   quasiDifference <- function(theta) {
     out <- qMu(theta = as.double(theta),
@@ -264,11 +264,13 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
           W_inv = as.matrix(W2.inv))
     }
 
-    if (ncol(mdf) == 4) {
+    if (K == 0) {
       second <- stats::optimize(f = GMMsecondStep, interval = c(-1e3, 1e3))
+      second$par <- second$minimum
     } else {
-      second <- stats::optim(rep(0, ncol(mdf) - 3), GMMsecondStep)
+      second <- stats::optim(rep(0, K + 1), GMMsecondStep)
     }
+
     names(second$par) <- names(mdf)[4:ncol(mdf)]
     result <- list(call = cl, coefficients = second$par, model = mdf,
                    first = first$par, W1 = W1, W2 = W2, Z = Z)
@@ -310,13 +312,15 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
                                    lag(mdf$mu, k = 1))
 
   # Remaining columns are the derivatives w.r.t. the coefficients on covariates:
-  for (k in 1:K) {
-    q.prime[, k + 1] <-
-      stats::na.omit(- mdf[[k + 4]] * (mdf[[3]] -
-                     result$coefficients[[1]] * mdf[[4]]) / mdf$mu +
-                     lag(mdf[[k + 4]], k = 1) * (lag(mdf[[3]], k = 1) -
-                     result$coefficients[[1]] * lag(mdf[[4]], k = 1)) /
-                                                lag(mdf$mu, k = 1))
+  if (K > 0) {
+    for (k in 1:K) {
+      q.prime[, k + 1] <-
+        stats::na.omit(- mdf[[k + 4]] * (mdf[[3]] -
+                       result$coefficients[[1]] * mdf[[4]]) / mdf$mu +
+                       lag(mdf[[k + 4]], k = 1) * (lag(mdf[[3]], k = 1) -
+                       result$coefficients[[1]] * lag(mdf[[4]], k = 1)) /
+                                                  lag(mdf$mu, k = 1))
+    }
   }
 
   # Turn the matrix into a list of matrices, split by individuals:
