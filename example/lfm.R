@@ -3,11 +3,6 @@ if (!suppressPackageStartupMessages(require(pacman))) install.packages("pacman")
 pacman::p_load(data.table, ggplot2, plm)
 pacman::p_load_gh("walshc/linearFeedbackModel")
 
-library(linearFeedbackModel)
-detach("package:linearFeedbackModel", unload = TRUE)
-install.packages(".", repos = NULL, type = "source")
-library(linearFeedbackModel)
-
 set.seed(2435262)
 
 gamma       <- 0.5
