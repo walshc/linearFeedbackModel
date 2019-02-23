@@ -1,54 +1,41 @@
+# Load/install necessary packages:
+if (!suppressPackageStartupMessages(require(pacman))) install.packages("pacman")
+pacman::p_load(data.table, ggplot2, plm)
+pacman::p_load_gh("walshc/linearFeedbackModel")
+
 library(linearFeedbackModel)
-library(plm)
-set.seed(123)
+detach("package:linearFeedbackModel", unload = TRUE)
+install.packages(".", repos = NULL, type = "source")
+library(linearFeedbackModel)
 
-# Create some data - follow example in Blundell, Griffith and Windmeijer (2002):
+set.seed(2435262)
 
-nT          <- 8     # Number of time periods
-N           <- 500   # Number of individuals
-gamma       <- 0.5   # Coefficient on lagged dependent variable
-beta        <- 0.5   # Coefficient on x
-rho         <- 0.5   # For the starting values of x
-tau         <- 0.1   # For effect of individual effects on x
-var_eta     <- 0.5   # Variance of distribution of individual fixed effects
-var_epsilon <- 0.5   # Variance of distribution of x
+gamma       <- 0.5
+beta        <- 0.5
+rho         <- 0.5
+tau         <- 0.1
+var_eta     <- 0.5
+var_epsilon <- 0.5
 
-# Parameters to be estimated:
-theta <- c(gamma, beta)
+N <- 10000
+start <- -50
+nT <- 10
+df <- data.table(expand.grid(i = 1:N, t = start:nT))
 
-# Draw individual effects:
-eta <- rnorm(N, mean = 0, sd = sqrt(var_eta))
+df[, eta := rnorm(length(unique(i)), mean = 0, sd = sqrt(var_eta)), by = i]
+df[, xi := rnorm(length(unique(i)), mean = 0,
+                 sd = sqrt(var_epsilon / (1 - rho^2))), by = i]
+df[t == start, x := (tau / (1 - rho)) * eta + xi]
+df[t == start, y := rpois(.N, lambda = exp(x * beta + eta))]
 
-# Draws for starting values of x:
-xi <- rnorm(N, mean = 0, sd = sqrt(var_epsilon / (1 - rho^2)))
-
-# Draw initial conditions for x and y:
-x0 <- (tau / (1 - rho)) * eta + xi
-y0 <- sapply(1:N, function(i) rpois(1, lambda = exp(x0 * beta + eta[i])))
-
-# Dataset to be created: List for each time period
-df <- vector("list", length = nT)
-
-# Create first time period:
-x <- rho * x0 + tau * eta + rnorm(N, mean = 0, sd = sqrt(var_epsilon))
-y <- sapply(1:N, function(i)
-            rpois(1, lambda = gamma * y0 + exp(beta * x0[i] + eta[i])))
-df[[1]] <- data.frame(i = 1:N, t = 1, x = x, y = y)
-
-# Create all following time periods:
-for (t in 2:nT) {
-  x <- rho * df[[t - 1]]$x + tau * eta +
-       rnorm(N, mean = 0, sd = sqrt(var_epsilon))
-  y <- sapply(1:N, function(i) rpois(1, lambda = gamma * df[[t - 1]]$y[i] +
-                                     exp(beta * df[[t - 1]]$x[i] + eta[i])))
-  df[[t]] <- data.frame(i = 1:N, t = t, x = x, y = y)
+for (j in (start+1):nT) {
+  df[t == j, lag.x := df[t == j - 1, x]]
+  df[t == j, lag.y := df[t == j - 1, y]]
+  df[t == j, x := rho * lag.x + tau * eta + rnorm(.N)]
+  df[t == j, y := rpois(.N, lambda = gamma * lag.y + exp(x * beta + eta))]
 }
-# Combine into one dataset:
-df <- do.call(rbind, df)
+df <- df[t > 0]
 
-# Convert to pdata.frame:
-data <- pdata.frame(df, index = c("i", "t"))
-
-test <- lfm(y ~ lag(y, k = 1) + x | lag(y, k = 2:4) + lag(x, k = 1:4),
-            data = data, effect = "individual", model = "onestep")
-print(summary(test))
+print(lfm(y ~ lag(y, k = 1) + x | lag(y, k = 2:4) + lag(x, k = 1:4),
+          data = df, effect = "individual", model = "twosteps",
+          index = c("i", "t")))

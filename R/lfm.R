@@ -1,5 +1,5 @@
 lfm <- function(formula, data, effect = "individual", model = "onestep",
-                weight.matrix = "identity") {
+                weight.matrix = "identity", index = NULL) {
 
   # Store the function call:
   cl <- match.call()
@@ -16,9 +16,13 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
   }
 
   # Check if data is a pdata.frame:
-  if ((inherits(data, "pdata.frame")) == 0)
-    stop("'data' is not a pdata.frame.
-         Use pdata.frame() from package plm to convert.")
+  if (is.null(index)) {
+    if ((inherits(data, "pdata.frame")) == 0)
+      stop("'data' is not a pdata.frame.
+           Use 'index' option or convert to pdata.frame")
+  } else {
+    data <- pdata.frame(data, index = index)
+  }
 
   # Check if data is balanced and if not balance it:
   if (!plm::pdim(data)$balanced) {
@@ -256,7 +260,7 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
     }
 
     GMMsecondStep <- function(theta) {
-      GMM(theta = as.double(first$par),
+      GMM(theta = as.double(theta),
           idx   = as.matrix(mdf[, 1:2]),
           nT    = as.integer(max(mdf$t)),
           data  = as.matrix(mdf[, 3:ncol(mdf)]),
