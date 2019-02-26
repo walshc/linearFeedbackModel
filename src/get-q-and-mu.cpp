@@ -46,13 +46,13 @@ List qMu(NumericVector theta, IntegerMatrix idx, int nT,
     }
   }
 
-  /* Apply the Wooldridge quasi-differencing transformation to get q: */
+  /* Apply the quasi-differencing transformation to get q: */
   NumericVector q(n * (nT - 2));
   int j = 0;
   for (i = 0; i < N; i++) {
     if (t[i] > 2) {
-      q[j] = (y[i] - theta[0] * l_y[i]) / mu[i] - \
-          (l_y[i] - theta[0] * l2_y[i]) / l_mu[i];
+      q[j] = (y[i] - theta[0] * l_y[i]) * l_mu[i] / mu[i] -
+          (l_y[i] - theta[0] * l2_y[i]);
       j += 1;
     }
   }

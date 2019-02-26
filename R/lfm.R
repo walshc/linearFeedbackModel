@@ -1,5 +1,5 @@
 lfm <- function(formula, data, effect = "individual", model = "onestep",
-                weight.matrix = "identity", index = NULL) {
+                weight.matrix = "instruments", index = NULL) {
 
   # Store the function call:
   cl <- match.call()
@@ -209,13 +209,12 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
     W1 <- diag(1, nrow = ncol(Z[[1]]), ncol = ncol(Z[[1]]))
   } else if (weight.matrix == "instruments") {
     # Use sum(Z'_i*Z_i):
-    W1 <- firstWeightMatrix(Z = do.call(rbind, Z))
-  }
-
-  # Invert the weighting matrix (taking the general inverse if necessary):
-  W1.inv <- MASS::ginv(W1)
-  if (min(eigen(W1)$values) < .Machine$double.eps) {
-    warning("The first-step matrix is singular, a general inverse is used")
+    W1.inv <- firstWeightMatrix(Z = as.matrix(do.call(rbind, Z)))
+    # Invert the weighting matrix (taking the general inverse if necessary):
+    W1 <- MASS::ginv(W1.inv)
+    if (min(eigen(W1.inv)$values) < .Machine$double.eps) {
+      warning("The first-step matrix is singular, a general inverse is used")
+    }
   }
 
   GMMfirstStep <- function(theta) {
@@ -224,7 +223,7 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
         nT    = as.integer(max(mdf$t)),
         data  = as.matrix(mdf[, 3:ncol(mdf)]),
         Z     = as.matrix(do.call(rbind, Z)),
-        W_inv = as.matrix(W1.inv))
+        W     = as.matrix(W1))
   }
 
   # Obtain a first step estimate of theta from the initial weight matrix:
@@ -245,19 +244,20 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
     return(out)
   }
 
+  # Find the efficient weight matrix inv((1/N)*sum(Z'_i*q_i*q'_i,Z_i)) using
+  # the estimates from the first step:
+  W2.inv <- secondWeightMatrix(theta = as.double(first$par),
+                               idx   = as.matrix(mdf[, 1:2]),
+                               nT    = as.integer(max(mdf$t)),
+                               data  = as.matrix(mdf[, 3:ncol(mdf)]),
+                               Z     = do.call(rbind, Z))
+  # Invert to get the second-step weight matrix:
+  W2 <- MASS::ginv(W2.inv)
+  if (min(eigen(W2.inv)$values) < .Machine$double.eps) {
+    warning("The second-step matrix is singular, a general inverse is used")
+  }
+
   if (model == "twosteps") {
-    # Find the efficient weight matrix (sum(Z'_i*q_i*q'_i,Z_i)) using
-    # the estimates from the first step:
-    W2 <- secondWeightMatrix(theta = as.double(first$par),
-                             idx   = as.matrix(mdf[, 1:2]),
-                             nT    = as.integer(max(mdf$t)),
-                             data  = as.matrix(mdf[, 3:ncol(mdf)]),
-                             Z     = do.call(rbind, Z))
-    # Invert the second-step weight matrix:
-    W2.inv <- MASS::ginv(W2)
-    if (min(eigen(W2)$values) < .Machine$double.eps) {
-      warning("The second-step matrix is singular, a general inverse is used")
-    }
 
     GMMsecondStep <- function(theta) {
       GMM(theta = as.double(theta),
@@ -265,7 +265,7 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
           nT    = as.integer(max(mdf$t)),
           data  = as.matrix(mdf[, 3:ncol(mdf)]),
           Z     = as.matrix(do.call(rbind, Z)),
-          W_inv = as.matrix(W2.inv))
+          W     = as.matrix(W2))
     }
 
     if (K == 0) {
@@ -308,46 +308,39 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
 
   # Find the variance-covariance matrix:
   mdf$mu <- quasiDifference(result$coefficients)$mu
-  q.prime <- matrix(0, N * (nT - 2), K + 1)
+  dq <- matrix(0, N * (nT - 2), K + 1)
 
   # First column is derivative wrt the coefficient on the lagged dependent var:
-  q.prime[, 1] <- stats::na.omit(- mdf[[4]] / mdf$mu -
-                                 - lag(mdf[[4]], k = 1) /
-                                   lag(mdf$mu, k = 1))
+  dq[, 1] <- stats::na.omit(- mdf[[4]] * lag(mdf$mu, k = 1) / mdf$mu +
+                            lag(mdf[[4]], k = 1))
 
   # Remaining columns are the derivatives w.r.t. the coefficients on covariates:
   if (K > 0) {
     for (k in 1:K) {
-      q.prime[, k + 1] <-
-        stats::na.omit(- mdf[[k + 4]] * (mdf[[3]] -
-                       result$coefficients[[1]] * mdf[[4]]) / mdf$mu +
-                       lag(mdf[[k + 4]], k = 1) * (lag(mdf[[3]], k = 1) -
-                       result$coefficients[[1]] * lag(mdf[[4]], k = 1)) /
-                                                  lag(mdf$mu, k = 1))
+      dq[, k + 1] <-
+        stats::na.omit((mdf[[3]] - result$coefficients[[1]] * mdf[[4]]) *
+                       (lag(mdf[[k + 4]], k = 1) - mdf[[k + 4]]) *
+                       (lag(mdf$mu, k = 1) / mdf$mu))
     }
   }
 
   # Turn the matrix into a list of matrices, split by individuals:
   id <- rep(1:N, each = nT - 2)
-  q.prime.list <-
-    lapply(split(q.prime, id),
-           function(x) matrix(x, nT - 2, length(result$coefficients)))
+  dq.list <- lapply(split(dq, id), function(x)
+    matrix(x, nT - 2, length(result$coefficients)))
 
-  # Multiply by the instrument matrix:
-  tmp <- as.list(data.frame(do.call(rbind, list(lapply(q.prime.list, t), Z))))
-  q.prime.Z <- lapply(tmp, function(x) x[[1]] %*% x[[2]])
-
-  # Average over individuals:
-  D <- Reduce("+", q.prime.Z) / length(q.prime.Z)
+  # Average of moment condition Jacobians:
+  C <- (1/N) * Reduce("+", lapply(seq_along(dq.list), function(i)
+    crossprod(Z[[i]], dq.list[[i]])))
 
   if (model == "onestep") {
-    W <- W1
+    result$vcov <- (1/N) * MASS::ginv(crossprod(C, W1) %*% C) %*%
+      crossprod(C, W1) %*% W1 %*% W2.inv %*% W1 %*% C %*%
+      MASS::ginv(crossprod(C, W1) %*% C)
   } else {
-    W <- W2
+    # Efficient GMM variance-covariance matrix:
+    result$vcov <- (1/N) * MASS::ginv(crossprod(C, W2) %*% C)
   }
-
-  result$D <- D
-  result$vcov <- (1 / N) * MASS::ginv(D %*% MASS::ginv(W) %*% t(D))
   class(result) <- "lfm"
   return(result)
 }

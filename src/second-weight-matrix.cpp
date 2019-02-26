@@ -46,13 +46,13 @@ NumericVector quasiDifference2(NumericVector theta, IntegerMatrix idx, int nT,
     }
   }
 
-  /* Apply the Wooldridge quasi-differencing transformation to get q: */
+  /* Apply the quasi-differencing transformation to get q: */
   NumericVector q(n * (nT - 2));
   int j = 0;
   for (i = 0; i < N; i++) {
     if (t[i] > 2) {
-      q[j] = (y[i] - theta[0] * l_y[i]) / mu[i] - \
-          (l_y[i] - theta[0] * l2_y[i]) / l_mu[i];
+      q[j] = (y[i] - theta[0] * l_y[i]) * l_mu[i] / mu[i] - \
+          (l_y[i] - theta[0] * l2_y[i]);
       j += 1;
     }
   }
@@ -65,7 +65,7 @@ NumericMatrix secondWeightMatrix(NumericVector theta, IntegerMatrix idx, int nT,
     NumericMatrix data, NumericMatrix Z)
 {
 
-  /* Perform the Wooldridge quasi differencing: */
+  /* Perform the quasi differencing: */
   NumericVector q = quasiDifference2(theta, idx, nT, data);
 
   int L = Z.ncol();       // Number of instruments
@@ -87,7 +87,7 @@ NumericMatrix secondWeightMatrix(NumericVector theta, IntegerMatrix idx, int nT,
     }
     for (int l = 0; l < L; l++) {
       for (int m = 0; m < L; m++) {
-        W(l, m) += Zq[l] * Zq[m];
+        W(l, m) += Zq[l] * Zq[m] / N;
       }
     }
   }

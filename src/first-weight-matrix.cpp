@@ -15,7 +15,7 @@ NumericMatrix firstWeightMatrix(NumericMatrix Z)
   for (j = 0; j < L; j++) {
     for (k = 0; k < L; k++) {
       for (i = 0; i < N; i++) {
-          W(j, k) += Z(i, j) * Z(i, k);
+          W(j, k) += Z(i, j) * Z(i, k) / N;
       }
     }
   }

@@ -7,7 +7,7 @@
   Econometrics 108 (2002) 113-131}
 \usage{
 lfm(formula, data, effect = "individual", model = "onestep",
-    weight.matrix = "identity", index = NULL)
+    weight.matrix = "instruments", index = NULL)
 }
 \arguments{
 \item{formula}{Similar to the \code{pgmm()} function in package \code{plm}.  A
@@ -30,8 +30,6 @@ lfm(formula, data, effect = "individual", model = "onestep",
 \value{
   \item{call}{The matched call}
   \item{coefficients}{The estimated coefficient}
-  \item{D}{The average of the Jacobian of the sample moment conditions over
-    each individual}
   \item{fitted.values}{\code{data.frame} of fitted values}
   \item{first}{The first stage estimates}
   \item{fixed.effects}{Estimates of the individual fixed effects}

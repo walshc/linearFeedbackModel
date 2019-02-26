@@ -51,8 +51,8 @@ NumericVector quasiDifference(NumericVector theta, IntegerMatrix idx, int nT,
   int j = 0;
   for (i = 0; i < N; i++) {
     if (t[i] > 2) {
-      q[j] = (y[i] - theta[0] * l_y[i]) / mu[i] - \
-          (l_y[i] - theta[0] * l2_y[i]) / l_mu[i];
+      q[j] = (y[i] - theta[0] * l_y[i]) * l_mu[i] / mu[i] - \
+          (l_y[i] - theta[0] * l2_y[i]);
       j += 1;
     }
   }
@@ -61,7 +61,7 @@ NumericVector quasiDifference(NumericVector theta, IntegerMatrix idx, int nT,
 
 // [[Rcpp::export]]
 double GMM(NumericVector theta, IntegerMatrix idx, int nT,
-    NumericMatrix data, NumericMatrix Z, NumericMatrix W_inv)
+    NumericMatrix data, NumericMatrix Z, NumericMatrix W)
 {
   /* Perform the Wooldridge quasi differencing: */
   NumericVector q = quasiDifference(theta, idx, nT, data);
@@ -83,7 +83,7 @@ double GMM(NumericVector theta, IntegerMatrix idx, int nT,
   double obj;
   for (i = 0; i < L; i++) {
     for (j = 0; j < L; j++) {
-      obj += g[i] * W_inv(i, j) * g[j];
+      obj += g[i] * W(i, j) * g[j];
     }
   }
   return obj;

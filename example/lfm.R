@@ -12,9 +12,9 @@ tau         <- 0.1
 var_eta     <- 0.5
 var_epsilon <- 0.5
 
-N <- 10000
+N <- 2000
 start <- -50
-nT <- 10
+nT <- 8
 df <- data.table(expand.grid(i = 1:N, t = start:nT))
 
 df[, eta := rnorm(length(unique(i)), mean = 0, sd = sqrt(var_eta)), by = i]
@@ -31,6 +31,6 @@ for (j in (start+1):nT) {
 }
 df <- df[t > 0]
 
-print(lfm(y ~ lag(y, k = 1) + x | lag(y, k = 2:4) + lag(x, k = 1:4),
-          data = df, effect = "individual", model = "twosteps",
-          index = c("i", "t")))
+print(summary(lfm(y ~ lag(y, k = 1) + x | lag(y, k = 2:9) + lag(x, k = 1:9),
+                  data = df, effect = "individual", model = "twosteps",
+                  index = c("i", "t"))))
