@@ -281,15 +281,16 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
       second <- stats::optimize(f = GMMsecondStep, interval = c(-1e3, 1e3))
       second$par <- second$minimum
     } else {
-      second <- stats::optim(rep(0, K + 1), GMMsecondStep)
+      second <- stats::optim(first$par, GMMsecondStep)
     }
 
     names(second$par) <- names(mdf)[4:ncol(mdf)]
     result <- list(call = cl, coefficients = second$par, model = mdf,
-                   first = first$par, W1 = W1, W2 = W2, Z = Z)
+                   first = first$par, W1 = W1, W2 = W2, Z = Z,
+                   obj = second$value)
   } else {
     result <- list(call = cl, coefficients = first$par, model = mdf,
-                   W1 = W1, Z = Z)
+                   W1 = W1, Z = Z, obj = first$value)
   }
 
   # Get an estimate of the fixed effects:

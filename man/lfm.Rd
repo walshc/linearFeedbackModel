@@ -41,6 +41,7 @@ lfm(formula, data, effect = "individual", model = "onestep",
   \item{W2}{The second-stage (efficient) weight matrix used (only returned if
     \code{model = "twosteps"} is used)}
   \item{Z}{The instrument matrix for each individual}
+  \item{obj}{The value of the GMM objective function at the estimated parameters.}
 }
 \examples{
 \dontrun{

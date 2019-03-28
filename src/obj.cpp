@@ -86,5 +86,5 @@ double GMM(NumericVector theta, IntegerMatrix idx, int nT,
       obj += g[i] * W(i, j) * g[j];
     }
   }
-  return obj;
+  return obj / ((N * N) / (nT * nT));
 }
