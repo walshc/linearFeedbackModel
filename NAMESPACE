@@ -1,4 +1,3 @@
 useDynLib(linearFeedbackModel)
 exportPattern("^[[:alpha:]]+")
 importFrom(Rcpp, evalCpp)
-importFrom(plm, plm)
