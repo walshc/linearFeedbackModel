@@ -1,5 +1,5 @@
 lfm <- function(formula, data, effect = "individual", model = "onestep",
-                weight.matrix = "instruments", index = NULL) {
+                weight.matrix = "instruments", index = NULL, start = NULL) {
 
   # Store the function call:
   cl <- match.call()
@@ -21,14 +21,15 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
       stop("'data' is not a pdata.frame.
            Use 'index' option or convert to pdata.frame")
   } else {
-    data <- pdata.frame(data, index = index)
+    data <- plm::pdata.frame(data, index = index)
   }
 
   # Check if data is balanced and if not balance it:
   if (!plm::pdim(data)$balanced) {
-    un.id <- sort(unique(index(data, "id")))
-    un.time <- sort(unique(index(data, "time")))
-    rownames(data) <- paste(index(data, "id"), index(data, "time"), sep = ".")
+    un.id <- sort(unique(plm::index(data, "id")))
+    un.time <- sort(unique(plm::index(data, "time")))
+    rownames(data) <- paste(plm::index(data, "id"), plm::index(data, "time"),
+                            sep = ".")
     allRows <- as.character(t(outer(un.id, un.time, paste, sep = ".")))
     data <- data[allRows, ]
     rownames(data) <- allRows
@@ -54,7 +55,7 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
          Default is 'identity'.")
 
   x <- formula
-  if (!inherits(x, "Formula")) x <- Formula(formula)
+  if (!inherits(x, "Formula")) x <- Formula::Formula(formula)
   # gmm instruments : named list with the lags, names being the variables
   gmm.form <- formula(x, rhs = 2, lhs = 0)
 
@@ -116,13 +117,13 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
   TL2 <- max(main.maxlag, gmm.minlag - 1)
 
   gmm.form <- as.formula(paste("~", paste(names(gmm.lags), collapse = "+")))
-  Form <- as.Formula(main.form, gmm.form)
+  Form <- Formula::as.Formula(main.form, gmm.form)
 
   mf <- match.call(expand.dots = FALSE)
   m <- match(c("formula", "data"), names(mf), 0)
   mf <- mf[c(1, m)]
   mf$drop.unused.levels <- TRUE
-  mf[[1]] <- as.name("plm")
+  mf[[1]] <- quote(plm::plm)
   mf$model <- NA
   mf$formula <- Form
   mf$na.action <- "na.pass"
@@ -137,7 +138,7 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
     has.response <- attr(trms, "response") == 1
     has.intercept <- attr(trms, "intercept") == 1
     if (has.intercept == 1) {
-      form <- Formula(update(formula(form), ~. - 1))
+      form <- Formula::Formula(update(formula(form), ~. - 1))
     }
     index <- attr(data, "index")
     X <- model.matrix(form, data)
@@ -184,7 +185,8 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
 
   # Model data frame:
   row.names(yX) <- NULL
-  mdf <- pdata.frame(cbind(index(data), yX), index = names(index(data)))
+  mdf <- plm::pdata.frame(cbind(plm::index(data), yX),
+                          index = names(plm::index(data)))
   names(mdf)[1:2] <- c("i", "t")
 
   # Convert indices from factor to integer:
@@ -231,7 +233,14 @@ lfm <- function(formula, data, effect = "individual", model = "onestep",
     first <- stats::optimize(f = GMMfirstStep, interval = c(-1e3, 1e3))
     first$par <- first$minimum
   } else {
-    first <- stats::optim(rep(0, K + 1), GMMfirstStep)
+    if (is.null(start)) {
+      first <- stats::optim(rep(0, K + 1), GMMfirstStep)
+    } else {
+      if (length(start) != K + 1) {
+        stop("Length of 'start' does not match number of parameters")
+      }
+      first <- stats::optim(start, GMMfirstStep)
+    }
   }
   names(first$par) <- names(mdf)[4:ncol(mdf)]
 

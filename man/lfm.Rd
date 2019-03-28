@@ -7,7 +7,7 @@
   Econometrics 108 (2002) 113-131}
 \usage{
 lfm(formula, data, effect = "individual", model = "onestep",
-    weight.matrix = "instruments", index = NULL)
+    weight.matrix = "instruments", index = NULL, start = NULL)
 }
 \arguments{
 \item{formula}{Similar to the \code{pgmm()} function in package \code{plm}.  A
@@ -26,6 +26,7 @@ lfm(formula, data, effect = "individual", model = "onestep",
   first-step weight matrix.}
 \item{index}{If \code{data} is not a \code{pdata.frame}, use this option to
         declare the names of the individual and time indexes.}
+\item{start}{An optional vector of starting values for optimization.}
 }
 \value{
   \item{call}{The matched call}
